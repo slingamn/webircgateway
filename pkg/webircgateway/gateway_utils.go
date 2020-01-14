@@ -116,6 +116,11 @@ func (s *Gateway) GetRemoteAddressFromRequest(req *http.Request) net.IP {
 func (s *Gateway) isRequestSecure(req *http.Request) bool {
 	remoteAddr, _, _ := net.SplitHostPort(req.RemoteAddr)
 	remoteIP := net.ParseIP(remoteAddr)
+	// RemoteAddr "has no defined format". With a Unix domain socket on Linux, it'll
+	// probably be "@". Assume anything uninterpretable as host:port is Unix domain:
+	if remoteIP == nil {
+		remoteIP = net.ParseIP("127.0.0.1")
+	}
 
 	isInRange := false
 	for _, cidrRange := range s.Config.ReverseProxies {
